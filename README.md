@@ -272,7 +272,7 @@ graceful shutdown that stops consuming and drains in-flight messages.
 - Non-root container user; production dependencies only in the runtime image.
 - CI runs `npm audit` and CodeQL ([security.yml](.github/workflows/security.yml)).
 - **Not implemented** (reference scope): API authentication/authorization, TLS to the broker and database,
-  per-service broker credentials. See [enterprise-saas-plateform](https://github.com/shivkumarsinghsky/enterprise-saas-plateform)
+  per-service broker credentials. See [enterprise-saas-platform](https://github.com/shivkumarsinghsky/enterprise-saas-platform)
   for authentication and tenant-aware authorization.
 
 ## Observability
@@ -299,7 +299,7 @@ Not implemented yet:
 
 - [Microservices Patterns](https://github.com/shivkumarsinghsky/microservices-patterns) — pattern catalogue (outbox, saga, idempotency, retry) with focused implementations
 - [Real-Time Monitoring Platform](https://github.com/shivkumarsinghsky/realtime-monitoring-platform) — high-volume telemetry events
-- [Enterprise SaaS Platform](https://github.com/shivkumarsinghsky/enterprise-saas-plateform) — tenant-aware events and audit logging
+- [Enterprise SaaS Platform](https://github.com/shivkumarsinghsky/enterprise-saas-platform) — tenant-aware events and audit logging
 - [System Design Architecture](https://github.com/shivkumarsinghsky/system-design-architecture) — e-commerce and notification system designs
 
 ## Author
