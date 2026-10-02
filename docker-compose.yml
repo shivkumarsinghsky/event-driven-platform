@@ -1,0 +1,86 @@
+# Local environment: PostgreSQL, RabbitMQ and the three services.
+#   docker compose up -d --build
+# Credentials below are local-only development defaults.
+
+x-service: &service
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+  healthcheck:
+    test: ["CMD", "wget", "-qO-", "http://localhost:3000/health/ready"]
+    interval: 10s
+    timeout: 3s
+    retries: 5
+
+x-env: &env
+  DATABASE_URL: postgres://edp:edp-local-dev@postgres:5432/edp
+  RABBITMQ_URL: amqp://edp:edp-local-dev@rabbitmq:5672
+  HTTP_PORT: "3000"
+  LOG_LEVEL: info
+  RETRY_DELAYS_MS: 1000,5000,30000
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: edp
+      POSTGRES_PASSWORD: edp-local-dev
+      POSTGRES_DB: edp
+    ports: ["${POSTGRES_PORT:-5432}:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edp -d edp"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: edp
+      RABBITMQ_DEFAULT_PASS: edp-local-dev
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_UI_PORT:-15672}:15672" # management UI: http://localhost:15672
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  order-service:
+    <<: *service
+    command: ["node", "dist/src/services/order/main.js"]
+    environment:
+      <<: *env
+      SERVICE_NAME: order-service
+      ROLES: api,relay,consumer
+    ports: ["${ORDER_PORT:-3001}:3000"]
+
+  inventory-service:
+    <<: *service
+    command: ["node", "dist/src/services/inventory/main.js"]
+    environment:
+      <<: *env
+      SERVICE_NAME: inventory-service
+      ROLES: api,relay,consumer
+    ports: ["${INVENTORY_PORT:-3002}:3000"]
+
+  notification-service:
+    <<: *service
+    command: ["node", "dist/src/services/notification/main.js"]
+    environment:
+      <<: *env
+      SERVICE_NAME: notification-service
+      ROLES: consumer
+      NOTIFICATION_FAILURE_RATE: "0.3"
+    ports: ["${NOTIFICATION_PORT:-3003}:3000"]
+
+volumes:
+  pgdata:
